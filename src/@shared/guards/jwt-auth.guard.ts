@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// guards/jwt-auth.guard.ts
 import {
     Injectable,
     CanActivate,
@@ -9,37 +8,71 @@ import {
 
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { AuthService } from 'src/features/_auth/auth.service';
+import { TJwtPayload } from '@shared/models/jwt';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
     constructor(
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly authService: AuthService,
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        const authHeader = request.headers.authorization;
+        const response = context.switchToHttp().getResponse();
 
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            throw new UnauthorizedException('Invalid authorization header');
+        // Get token from cookie instead of Authorization header
+        const accessToken = request.cookies?.accessToken;
+        const refreshToken = request.cookies?.refreshToken;
+
+        if (accessToken) {
+            try {
+                const payload = await this.jwtService.verifyAsync(accessToken, {
+                    secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+                });
+
+                request['user'] = payload;
+
+                return true;
+            } catch (error) {
+                // Access token invalid, will try refresh token below
+            }
         }
 
-        const token = authHeader.split(' ')[1];
+        // Try refresh token if access token is invalid or missing
+        if (refreshToken) {
+            try {
+                const refreshPayload = await this.jwtService.verifyAsync(
+                    refreshToken,
+                    {
+                        secret: this.configService.get<string>(
+                            'JWT_REFRESH_SECRET',
+                        ),
+                    },
+                );
 
-        if (!token) {
-            throw new UnauthorizedException('No JWT token found');
+                const payload: TJwtPayload = {
+                    sub: refreshPayload.sub,
+                    email: refreshPayload.email,
+                    first_name: refreshPayload.first_name,
+                    last_name: refreshPayload.last_name,
+                    is_active: refreshPayload.is_active,
+                };
+
+                request['user'] = payload;
+
+                return await this.authService.setResponseCookies(
+                    response,
+                    payload,
+                );
+            } catch (error) {
+                // Refresh token invalid
+                throw new UnauthorizedException('Invalid JWT refresh token');
+            }
         }
 
-        try {
-            const payload = await this.jwtService.verifyAsync(token, {
-                secret: this.configService.get<string>('JWT_SECRET'), // Ensure you have JWT_SECRET in your .env file
-            });
-            // Attach the user payload to the request object for use in controllers/services
-            request['user'] = payload;
-            return true; // Allow the request to proceed
-        } catch (error) {
-            throw new UnauthorizedException('Invalid JWT token');
-        }
+        throw new UnauthorizedException('No valid JWT token found in cookies');
     }
 }

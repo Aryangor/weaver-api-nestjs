@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository, TypeORMError } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from '@shared/entities/user.entity';
 import { UserModel } from './user.model';
 
