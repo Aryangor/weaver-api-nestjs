@@ -46,7 +46,10 @@ export class AuthService {
         return await this.setResponseCookies(res, payload);
     }
 
-    async setResponseCookies(res: Response, payload: any): Promise<boolean> {
+    async setResponseCookies(
+        res: Response,
+        payload: TJwtPayload,
+    ): Promise<boolean> {
         // Set tokens as an HTTP-only cookies
         const maxAgeAccess =
             (this.configService.get<number | undefined>(

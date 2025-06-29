@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
     Injectable,
     CanActivate,
@@ -10,6 +9,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from 'src/features/_auth/auth.service';
 import { TJwtPayload } from '@shared/models/jwt';
+import { Request, Response } from 'express';
+
+type TCookie = {
+    accessToken?: string;
+    refreshToken?: string;
+};
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -20,12 +25,13 @@ export class JwtAuthGuard implements CanActivate {
     ) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const response = context.switchToHttp().getResponse();
+        const request = context.switchToHttp().getRequest<Request>();
+        const response = context.switchToHttp().getResponse<Response>();
 
-        // Get token from cookie instead of Authorization header
-        const accessToken = request.cookies?.accessToken;
-        const refreshToken = request.cookies?.refreshToken;
+        // Get tokens from cookies
+        const cookies: TCookie = request.cookies || {};
+        const accessToken = cookies.accessToken;
+        const refreshToken = cookies.refreshToken;
 
         if (accessToken) {
             try {
@@ -44,14 +50,12 @@ export class JwtAuthGuard implements CanActivate {
         // Try refresh token if access token is invalid or missing
         if (refreshToken) {
             try {
-                const refreshPayload = await this.jwtService.verifyAsync(
-                    refreshToken,
-                    {
+                const refreshPayload: TJwtPayload =
+                    await this.jwtService.verifyAsync(refreshToken, {
                         secret: this.configService.get<string>(
                             'JWT_REFRESH_SECRET',
                         ),
-                    },
-                );
+                    });
 
                 const payload: TJwtPayload = {
                     sub: refreshPayload.sub,
