@@ -1,4 +1,4 @@
 import { AuthController } from './features/_auth/auth.controller';
-import { AppController } from './features/app/app.controller';
+import { UsersController } from './features/users/users.controller';
 
-export const CONTROLLERS = [AppController, AuthController];
+export const CONTROLLERS = [AuthController, UsersController];

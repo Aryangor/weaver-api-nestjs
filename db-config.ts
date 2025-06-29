@@ -1,6 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { User } from '@shared/entities/user.entity';
-import { InitialUserData1745309732907 } from '@shared/migrations/1745309732907-initial_user_data';
+
 import { DataSourceOptions, DataSource } from 'typeorm';
 
 export function fnDbConnection(): TypeOrmModuleOptions {
@@ -16,9 +15,9 @@ export function fnDbConnection(): TypeOrmModuleOptions {
 
         migrationsTableName: '_migrations',
         migrations: ['dist/src/@shared/migrations/*{.ts,.js}'],
-        migrationsRun: false, // Automatically run migrations on every application launch
+        migrationsRun: process.env.RUN_MIGRATIONS === 'true', // Automatically run migrations on every application launch
 
-        synchronize: true, // Disable in production
+        synchronize: process.env.SYNCRONIZE_DB === 'true', // Disable for production
         //   ssl: this.isProduction(),
     };
 }

@@ -1,8 +1,8 @@
 import { JwtAuthGuard } from '@shared/guards/jwt-auth.guard';
 import { AuthService } from './features/_auth/auth.service';
-import { AppService } from './features/app/app.service';
+import { UsersService } from './features/users/users.service';
 
-const SERVICES = [AppService, AuthService];
+const SERVICES = [AuthService, UsersService];
 
 const GUARDS = [JwtAuthGuard];
 
