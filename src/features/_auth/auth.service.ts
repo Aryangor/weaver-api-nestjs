@@ -8,6 +8,7 @@ import { User } from '@entities/user.entity'; // Adjust the import path as neces
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { TJwtPayload } from '@shared/models/jwt';
+import { UserModel } from '../users/user.model';
 
 @Injectable()
 export class AuthService {
@@ -17,15 +18,22 @@ export class AuthService {
         private readonly userRepository: Repository<User>,
         private readonly configService: ConfigService,
     ) {}
+
     async login(
         res: Response,
         email: string,
         password: string,
-    ): Promise<boolean> {
+    ): Promise<Partial<UserModel>> {
         const user = await this.userRepository.findOne({ where: { email } });
         if (!user?.password) {
             throw new UnauthorizedException(
                 'User not found or password not set!',
+            );
+        }
+
+        if (user.is_active === false) {
+            throw new UnauthorizedException(
+                'User is not active! Please contact support to activate the user.',
             );
         }
 
@@ -43,7 +51,19 @@ export class AuthService {
             is_active: user.is_active,
         };
 
-        return await this.setResponseCookies(res, payload);
+        const setCookies = await this.setResponseCookies(res, payload);
+
+        if (!setCookies) {
+            throw new UnauthorizedException('Failed to set cookies!');
+        }
+
+        // Return partial user data
+        return {
+            id: user.id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+        };
     }
 
     async setResponseCookies(

@@ -23,6 +23,9 @@ export class User {
     @Column({ type: 'varchar', length: 255 })
     last_name: string;
 
+    @Column({ type: 'enum', enum: ['admin', 'user'], default: 'user' })
+    role: 'admin' | 'user';
+
     @Column({ type: 'varchar', length: 30 })
     phone: string;
 

@@ -3,57 +3,69 @@ import { User } from '@shared/entities/user.entity';
 
 export class InitialUserData1745309732907 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const users = [
+        const users: Partial<User>[] = [
             {
-                firstName: 'John',
-                lastName: 'Doe',
-                email: 'john.doe@example.com',
+                first_name: 'SA',
+                last_name: 'Tester',
+                email: 'satester.38@gmail.com',
                 phone: '1234567890',
                 role: 'admin',
-                isActive: true,
+                is_active: true,
+                password:
+                    '$2b$10$45zsKi5joDa8jkXpusBaMeVNuJUSoTLoK82AV1BgUt.JMmkNpsd.2',
+                last_login: null,
+                reset_password_token: null,
             },
             {
-                firstName: 'Jane',
-                lastName: 'Smith',
+                first_name: 'Jane',
+                last_name: 'Smith',
                 email: 'jane.smith@example.com',
                 phone: '0987654321',
                 role: 'user',
-                isActive: true,
+                is_active: true,
+                password: null,
+                last_login: null,
+                reset_password_token: null,
             },
             {
-                firstName: 'Alice',
-                lastName: 'Johnson',
+                first_name: 'Alice',
+                last_name: 'Johnson',
                 email: 'alice.johnson@example.com',
                 phone: '1122334455',
                 role: 'user',
-                isActive: true,
+                is_active: true,
+                password: null,
+                last_login: null,
+                reset_password_token: null,
             },
             {
-                firstName: 'Bob',
-                lastName: 'Brown',
+                first_name: 'Bob',
+                last_name: 'Brown',
                 email: 'bob.brown@example.com',
                 phone: '2233445566',
-                role: 'moderator',
-                isActive: true,
+                role: 'user',
+                is_active: true,
+                password: null,
+                last_login: null,
+                reset_password_token: null,
             },
             {
-                firstName: 'Charlie',
-                lastName: 'Davis',
+                first_name: 'Charlie',
+                last_name: 'Davis',
                 email: 'charlie.davis@example.com',
                 phone: '3344556677',
                 role: 'admin',
-                isActive: true,
+                is_active: true,
+                password: null,
+                last_login: null,
+                reset_password_token: null,
             },
         ];
 
         const entityManager = queryRunner.manager;
         for (const user of users) {
             await entityManager.insert(User, {
-                first_name: user.firstName,
-                last_name: user.lastName,
-                email: user.email,
-                phone: user.phone,
-                is_active: user.isActive,
+                ...user,
                 created_at: new Date(),
                 updated_at: new Date(),
             });
@@ -62,14 +74,12 @@ export class InitialUserData1745309732907 implements MigrationInterface {
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const entityManager = queryRunner.manager;
-        await entityManager.delete(User, {
-            email: [
-                'john.doe@example.com',
-                'jane.smith@example.com',
-                'alice.johnson@example.com',
-                'bob.brown@example.com',
-                'charlie.davis@example.com',
-            ],
-        });
+        await entityManager.delete(User, [
+            { email: 'john.doe@example.com' },
+            { email: 'jane.smith@example.com' },
+            { email: 'alice.johnson@example.com' },
+            { email: 'bob.brown@example.com' },
+            { email: 'charlie.davis@example.com' },
+        ]);
     }
 }
