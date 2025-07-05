@@ -66,6 +66,23 @@ export class AuthService {
         };
     }
 
+    logout(res: Response): Promise<boolean> {
+        // Clear cookies
+        res.clearCookie('accessToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+        });
+
+        return Promise.resolve(true);
+    }
+
     async setResponseCookies(
         res: Response,
         payload: TJwtPayload,

@@ -19,4 +19,9 @@ export class AuthController {
             loginDto.password,
         );
     }
+
+    @Post('logout')
+    async logout(@Res({ passthrough: true }) response: Response) {
+        return await this.authService.logout(response);
+    }
 }
