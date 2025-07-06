@@ -4,7 +4,9 @@ export class UserModel {
     first_name: string;
     last_name: string;
     phone: string;
+    role: 'admin' | 'user';
     is_active: boolean;
-    created_at: Date;
-    updated_at: Date;
+    last_login?: Date;
+    created_at?: Date;
+    updated_at?: Date;
 }

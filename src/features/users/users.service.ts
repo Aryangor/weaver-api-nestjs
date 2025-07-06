@@ -21,10 +21,8 @@ export class UsersService {
                 first_name: user.first_name,
                 last_name: user.last_name,
                 phone: user.phone,
+                role: user.role,
                 is_active: user.is_active,
-                last_login: user.last_login,
-                created_at: user.created_at,
-                updated_at: user.updated_at,
             };
         });
     }
@@ -42,9 +40,8 @@ export class UsersService {
             first_name: user.first_name,
             last_name: user.last_name,
             phone: user.phone,
-            is_active: user.is_active,
-            created_at: user.created_at,
-            updated_at: user.updated_at,
+            role: user.role,
+            is_active: Boolean(user.is_active),
         };
     }
 

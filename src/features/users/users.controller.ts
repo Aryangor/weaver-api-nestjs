@@ -3,6 +3,7 @@ import {
     Body,
     Controller,
     Get,
+    Param,
     Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -20,7 +21,7 @@ export class UsersController {
     }
 
     @Get(':id')
-    async getById(id: number): Promise<UserModel> {
+    async getById(@Param('id') id: number): Promise<UserModel> {
         return this.usersService.getUserById(id);
     }
 
