@@ -11,8 +11,10 @@ export class UsersService {
         private readonly userRepository: Repository<User>,
     ) {}
 
-    async getAllUsers(): Promise<UserModel[]> {
-        const users = await this.userRepository.find();
+    async getAllUsers(showInactive: boolean): Promise<UserModel[]> {
+        const users = await this.userRepository.find(
+            showInactive ? {} : { where: { is_active: true } },
+        );
 
         return users.map((user) => {
             return {

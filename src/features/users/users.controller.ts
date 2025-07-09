@@ -5,6 +5,7 @@ import {
     Get,
     Param,
     Post,
+    Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserModel } from './user.model';
@@ -16,8 +17,12 @@ export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Get()
-    async getAll(): Promise<UserModel[]> {
-        return this.usersService.getAllUsers();
+    async getAll(
+        @Query('show_inactive') showInactiveString?: string,
+    ): Promise<UserModel[]> {
+        // Convert the query param to a boolean
+        const showInactive = showInactiveString === 'true';
+        return this.usersService.getAllUsers(showInactive);
     }
 
     @Get(':id')
