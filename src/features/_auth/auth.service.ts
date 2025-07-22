@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { TJwtPayload } from '@shared/models/jwt';
 import { UserModel } from '../users/user.model';
+import { EmailService } from '@shared/services/email.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
         @InjectRepository(User) // Assuming 'core' is your core database connection name
         private readonly userRepository: Repository<User>,
         private readonly configService: ConfigService,
+        private readonly emailService: EmailService, // Inject EmailService if needed
     ) {}
 
     async login(
@@ -56,6 +58,15 @@ export class AuthService {
         if (!setCookies) {
             throw new UnauthorizedException('Failed to set cookies!');
         }
+
+        this.emailService
+            .sendEmail('Morst1969@superrito.com', 'Login Notification', {
+                name: user.first_name,
+                code: 'https://www.example.com/',
+            })
+            .catch((error) => {
+                console.error('Failed to send email:', error);
+            });
 
         // Return partial user data
         return {
