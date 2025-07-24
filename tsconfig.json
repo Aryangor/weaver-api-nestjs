@@ -13,7 +13,7 @@
         "paths": {
             "@shared/*": ["src/@shared/*"],
             "@decorators/*": ["src/@shared/decorators/*"],
-            "@dtos/*": ["src/@shared/dto/*"],
+            "@dtos/*": ["src/features/_auth/dto/*"],
             "@entities/*": ["src/@shared/entities/*"],
             "@guards/*": ["src/@shared/guards/*"]
         },

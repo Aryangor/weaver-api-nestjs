@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 @Injectable()
 export class EmailService {
@@ -16,27 +14,7 @@ export class EmailService {
         },
     });
 
-    async sendEmail(
-        to: string,
-        subject: string,
-        params: { name: string; code: string },
-    ): Promise<void> {
-        // Load and compile the HTML template
-        const templatePath = join(
-            process.cwd(),
-            'src',
-            '@shared',
-            'templates',
-            'emails',
-            'reset-password.html',
-        );
-
-        let html = readFileSync(templatePath, 'utf8');
-
-        html = html
-            .replace(/{{var.name}}/g, params.name)
-            .replace(/{{var.resetLink}}/g, params.code);
-
+    async sendEmail(to: string, subject: string, html: string): Promise<void> {
         try {
             await this.transporter.sendMail({
                 from: `"${process.env.SMTP_FROM_NAME}" <${process.env.SMTP_FROM_ADDRESS}>`,

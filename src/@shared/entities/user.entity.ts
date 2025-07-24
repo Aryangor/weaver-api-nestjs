@@ -36,7 +36,7 @@ export class User {
     last_login: Date | null;
 
     // JWT for reset password
-    @Column({ type: 'varchar', length: 255, nullable: true })
+    @Column({ type: 'varchar', length: 1000, nullable: true })
     reset_password_token: string | null;
 
     @CreateDateColumn({ type: 'timestamp', precision: 0 })

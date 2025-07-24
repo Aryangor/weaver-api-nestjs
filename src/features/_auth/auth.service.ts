@@ -11,6 +11,9 @@ import { TJwtPayload } from '@shared/models/jwt';
 import { UserModel } from '../users/user.model';
 import { EmailService } from '@shared/services/email.service';
 
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 @Injectable()
 export class AuthService {
     constructor(
@@ -59,15 +62,6 @@ export class AuthService {
             throw new UnauthorizedException('Failed to set cookies!');
         }
 
-        this.emailService
-            .sendEmail('Morst1969@superrito.com', 'Login Notification', {
-                name: user.first_name,
-                code: 'https://www.example.com/',
-            })
-            .catch((error) => {
-                console.error('Failed to send email:', error);
-            });
-
         // Return partial user data
         return {
             id: user.id,
@@ -75,6 +69,125 @@ export class AuthService {
             first_name: user.first_name,
             last_name: user.last_name,
         };
+    }
+
+    async resetPassword(email: string): Promise<boolean> {
+        // First check that the user with this email exists
+        const user = await this.userRepository.findOne({ where: { email } });
+
+        if (!user) {
+            throw new UnauthorizedException('User not found!');
+        }
+
+        //  Calculate expiry time for the reset token
+        if (!user.is_active) {
+            throw new UnauthorizedException(
+                'User is not active! Please contact support to activate the user.',
+            );
+        }
+
+        // Calculate expiry time for the reset token, based on the config
+        const expiryTime =
+            Math.floor(Date.now() / 1000) +
+            60 *
+                (this.configService.get<number>(
+                    'JWT_RESET_PASSWORD_EXPIRES_IN_HOURS',
+                ) || 1);
+
+        // Generate a reset password token
+        const payload: TJwtPayload = {
+            sub: user.id,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            is_active: user.is_active,
+        };
+
+        const resetToken = await this.jwtService.signAsync(payload, {
+            secret: this.configService.get<string>('JWT_RESET_PASSWORD_SECRET'),
+            expiresIn: `${this.configService.get<number | string>('JWT_RESET_PASSWORD_EXPIRES_IN_HOURS') || 1}h`,
+        });
+
+        // Update the reset token in the database
+        user.reset_password_token = resetToken;
+        await this.userRepository.save(user);
+
+        // Get the server URL from config or environment
+        const serverUrl =
+            this.configService.get<string>('CLIENT_URL') ||
+            `http://localhost:${process.env.PORT || 3000}`;
+
+        // Calculate email variables
+        const first_name = user.first_name;
+        const last_name = user.last_name;
+        const company =
+            this.configService.get<string>('COMPANY_NAME') || 'Weaver App';
+        const reset_link = `${serverUrl}/auth/change-password?token=${resetToken}`;
+        const expiry_time = `${this.configService.get<number | string>('JWT_RESET_PASSWORD_EXPIRES_IN_HOURS') || 1} hour(s)`;
+
+        // Load and compile the HTML template
+        const templatePath = join(
+            process.cwd(),
+            'src',
+            '@shared',
+            'templates',
+            'emails',
+            'reset-password.html',
+        );
+
+        let html = readFileSync(templatePath, 'utf8');
+
+        html = html
+            .replace(/{{var.first_name}}/g, first_name)
+            .replace(/{{var.last_name}}/g, last_name)
+            .replace(/{{var.company}}/g, company)
+            .replace(/{{var.reset_link}}/g, reset_link)
+            .replace(/{{var.expiry_time}}/g, expiry_time);
+
+        // Send the reset password email
+        await this.emailService.sendEmail(user.email, 'Reset Password', html);
+
+        return true;
+    }
+
+    async changePassword(token: string, password: string): Promise<boolean> {
+        // Verify the reset token
+        const payload = await this.jwtService.verifyAsync<TJwtPayload>(token, {
+            secret: this.configService.get<string>('JWT_RESET_PASSWORD_SECRET'),
+        });
+
+        if (!payload) {
+            throw new UnauthorizedException('Invalid token!');
+        }
+
+        // Find the user by ID
+        const user = await this.userRepository.findOne({
+            where: { id: payload.sub },
+        });
+
+        if (!user) {
+            throw new UnauthorizedException('User not found!');
+        }
+
+        // Check if the token is the same
+        if (user.reset_password_token !== token) {
+            throw new UnauthorizedException('Invalid token!');
+        }
+
+        // Check if the token hasn't expired
+        if (payload.exp && payload.exp < Date.now() / 1000) {
+            throw new UnauthorizedException('Token has expired!');
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        user.reset_password_token = null; // Clear the reset token after use
+
+        // Save the user
+        await this.userRepository.save(user);
+
+        return true;
     }
 
     logout(res: Response): Promise<boolean> {
